@@ -1,6 +1,6 @@
 package com.bankofcli.bankofcli.dao;
 import com.bankofcli.bankofcli.model.Account;
-import com.bankofcli.bankofcli.util.Database;
+import com.bankofcli.bankofcli.util.DatabaseConnection;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,8 +16,8 @@ public class AccountDAO {
             """; // creates a new row in the account table. After creating the account, return the newly created info
 
         try ( // to close db connection and prepared statement automatically
-                Connection connection = Database.getConnection(); // connect to postgreSQL
-                PreparedStatement statement = connection.prepareStatement(sql)
+              Connection connection = DatabaseConnection.getConnection(); // connect to postgreSQL
+              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
 
             statement.setString(1, pin); // fills first ? (pin placeholder)
@@ -47,8 +47,8 @@ public class AccountDAO {
             WHERE account_id = ?
             """;
         try (
-              Connection connection = Database.getConnection();
-              PreparedStatement statement = connection.prepareStatement(sql)
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
         ) {
 
             statement.setLong(1, accountId);
@@ -77,7 +77,7 @@ public class AccountDAO {
             WHERE account_id = ? AND pin = ?
             """;
         try (
-                Connection connection = Database.getConnection();
+                Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)
         ) {
 
@@ -104,7 +104,7 @@ public class AccountDAO {
             """;
 
         try (
-                Connection connection = Database.getConnection();
+                Connection connection = DatabaseConnection.getConnection();
                 PreparedStatement statement = connection.prepareStatement(sql)
         ) {
 
