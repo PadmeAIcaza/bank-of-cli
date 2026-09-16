@@ -11,6 +11,9 @@ target/
 *.iws
 *.iml
 *.ipr
+.idea/encodings.xml
+.idea/misc.xml
+.idea/vcs.xml
 
 ### Eclipse ###
 .apt_generated
@@ -37,4 +40,5 @@ build/
 ### Mac OS ###
 .DS_Store
 
+# Environment variables
 .env
