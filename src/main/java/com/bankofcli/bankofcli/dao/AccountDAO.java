@@ -120,4 +120,28 @@ public class AccountDAO {
             e.printStackTrace();
         }
     }
+
+    public boolean deleteAccount(long accountId) {
+        String sql = """
+            DELETE FROM account
+            WHERE account_id = ?
+            """;
+
+        try (
+                Connection connection = DatabaseConnection.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+
+            statement.setLong(1, accountId);
+            int result = statement.executeUpdate(); // returns the num of rows affected by the delete
+
+            if (result > 0) {
+                return true;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
