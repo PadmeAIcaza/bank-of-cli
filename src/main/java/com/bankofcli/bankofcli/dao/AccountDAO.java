@@ -12,17 +12,17 @@ public class AccountDAO {
         String sql = """
             INSERT INTO account (pin, balance)
             VALUES (?, ?)
-            RETURNING account_id, pin, balance, created_at
+            RETURNING *
             """; // creates a new row in the account table. After creating the account, return the newly created info
 
         try ( // to close db connection and prepared statement automatically
                 Connection connection = Database.getConnection(); // connect to postgreSQL
-                PreparedStatement statement = connection.prepareStatement(sql) // sends the sql code to postgreSQL
+                PreparedStatement statement = connection.prepareStatement(sql)
         ) {
 
             statement.setString(1, pin); // fills first ? (pin placeholder)
             statement.setBigDecimal(2, BigDecimal.ZERO); // fills second ? (balance placeholder)
-            ResultSet result = statement.executeQuery(); // Java stores the returned information
+            ResultSet result = statement.executeQuery(); // Java sends the query to postgreSQL
 
             if (result.next()) { // if postgreSQL return a row, read the individual columns
                 return new Account( // turn the database row into a Java obj
@@ -71,7 +71,6 @@ public class AccountDAO {
     }
 
     public boolean authenticate(long accountId, String pin) {
-        // SELECT ... WHERE account_id = ? AND pin = ?
         String sql = """
             SELECT *
             FROM account
