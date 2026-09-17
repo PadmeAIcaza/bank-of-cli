@@ -1,14 +1,14 @@
 package com.bankofcli.bankofcli.service;
-import com.bankofcli.bankofcli.dao.AccountDAO;
+import com.bankofcli.bankofcli.dao.BankDAO;
 import com.bankofcli.bankofcli.model.Account;
 
 import java.math.BigDecimal;
 
 public class BankService {
-    private final AccountDAO accountDAO;
+    private final BankDAO accountDAO;
 
     public BankService() {
-        this.accountDAO = new AccountDAO();
+        this.accountDAO = new BankDAO();
     }
 
     public Account register(String pin) {

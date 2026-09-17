@@ -1,5 +1,5 @@
 package com.bankofcli.dao;
-import com.bankofcli.bankofcli.dao.AccountDAO;
+import com.bankofcli.bankofcli.dao.BankDAO;
 import com.bankofcli.bankofcli.model.Account;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,17 +7,17 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AccDaoTest {
-    private AccountDAO accountDAO;
+    private BankDAO bankDAO;
     @BeforeEach
     void setUp() {
-        accountDAO = new AccountDAO();
+        bankDAO = new BankDAO();
     }
 
     // positive tests
     @Test
     void testCreateAccount() {
 
-        Account account = accountDAO.createAccount("1234");
+        Account account = bankDAO.createAccount("1234");
 
         assertNotNull(account);
         assertTrue(account.getAccountId() > 0);
@@ -29,8 +29,8 @@ public class AccDaoTest {
     @Test
     void testFindById() {
 
-        Account created = accountDAO.createAccount("1234");
-        Account found = accountDAO.findById(created.getAccountId());
+        Account created = bankDAO.createAccount("1234");
+        Account found = bankDAO.findById(created.getAccountId());
 
         assertNotNull(found);
         assertEquals(created.getAccountId(), found.getAccountId());
@@ -40,16 +40,16 @@ public class AccDaoTest {
     @Test
     void testAuthenticateWithCorrectPin() {
 
-        Account account = accountDAO.createAccount("1234");
-        boolean authenticated = accountDAO.authenticate(account.getAccountId(), "1234");
+        Account account = bankDAO.createAccount("1234");
+        boolean authenticated = bankDAO.authenticate(account.getAccountId(), "1234");
         assertTrue(authenticated);
     }
 
     @Test
     void testDeleteAccount() {
-        Account created = accountDAO.createAccount("1234");
-        boolean deleted = accountDAO.deleteAccount(created.getAccountId());
-        Account found = accountDAO.findById(created.getAccountId());
+        Account created = bankDAO.createAccount("1234");
+        boolean deleted = bankDAO.deleteAccount(created.getAccountId());
+        Account found = bankDAO.findById(created.getAccountId());
         assertTrue(deleted);
         assertNull(found);
     }
@@ -58,21 +58,21 @@ public class AccDaoTest {
     @Test
     void testAuthenticateWithInvalidAccount() {
 
-        boolean authenticated = accountDAO.authenticate(999999999, "1234");
+        boolean authenticated = bankDAO.authenticate(999999999, "1234");
         assertFalse(authenticated);
     }
 
     @Test
     void testFindByIdWithInvalidId() {
-        Account account = accountDAO.findById(999999999);
+        Account account = bankDAO.findById(999999999);
         assertNull(account);
     }
 
     @Test
     void testAuthenticateWithWrongPin() {
 
-        Account account = accountDAO.createAccount("1234");
-        boolean authenticated = accountDAO.authenticate(account.getAccountId(), "9999");
+        Account account = bankDAO.createAccount("1234");
+        boolean authenticated = bankDAO.authenticate(account.getAccountId(), "9999");
         assertFalse(authenticated);
     }
 

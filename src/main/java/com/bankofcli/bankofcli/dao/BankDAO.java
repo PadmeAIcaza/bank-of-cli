@@ -6,8 +6,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-public class AccountDAO {
+public class BankDAO {
 
+    // Account operations
     public Account createAccount(String pin) {
         String sql = """
             INSERT INTO account (pin, balance)
