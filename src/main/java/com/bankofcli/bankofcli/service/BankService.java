@@ -1,14 +1,15 @@
 package com.bankofcli.bankofcli.service;
 import com.bankofcli.bankofcli.dao.BankDAO;
 import com.bankofcli.bankofcli.model.Account;
-
+import com.bankofcli.bankofcli.model.Transaction;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class BankService {
-    private final BankDAO accountDAO;
+    private final BankDAO bankDAO;
 
     public BankService() {
-        this.accountDAO = new BankDAO();
+        this.bankDAO = new BankDAO();
     }
 
     public Account register(String pin) {
@@ -16,64 +17,87 @@ public class BankService {
             throw new IllegalArgumentException("PIN must contain exactly 4 digits.");
         }
 
-        return accountDAO.createAccount(pin); // if valid, ask the dao to create the account in PSQL
+        return bankDAO.createAccount(pin); // if valid, ask the dao to create the account in PSQL
     }
 
     public Account login(long accountId, String pin) {
-        if (accountDAO.authenticate(accountId, pin)) {
-            return accountDAO.findById(accountId);
+        if (bankDAO.authenticate(accountId, pin)) {
+            return bankDAO.findById(accountId);
         }
 
         return null;
     }
 
     public BigDecimal obtainBalance(long accountId) {
-        Account account = accountDAO.findById(accountId);
+        Account account = bankDAO.findById(accountId);
         if (account == null) {
             throw new IllegalArgumentException("Account not found.");
         }
         return account.getBalance();
     }
 
-    public Account deposit(long accountId, BigDecimal amount) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be more than $0.0");
+    public void deposit(long accountId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than $0.00");
         }
-        Account account = accountDAO.findById(accountId);
+
+        Account account = bankDAO.findById(accountId);
         if (account == null) {
             throw new IllegalArgumentException("Account not found.");
         }
-        BigDecimal newBalance = account.getBalance().add(amount);
 
-        accountDAO.updateBalance(accountId, newBalance);
-        account.setBalance(newBalance);
+        boolean success = bankDAO.deposit(accountId, amount);
 
-        return account;
+        if (!success) {
+            throw new IllegalStateException("Deposit could not be completed");
+        }
+
+//        BigDecimal newBalance = account.getBalance().add(amount);
+//
+//        bankDAO.updateBalance(accountId, newBalance);
+//        bankDAO.createTransaction(accountId, "DEPOSIT", amount, null);
+//        account.setBalance(newBalance);
+
     }
 
-    public Account withdraw(long accountId, BigDecimal amount) {
-        Account account = accountDAO.findById(accountId);
+    public void withdraw(long accountId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than $0.00");
+        }
+
+        Account account = bankDAO.findById(accountId);
         if (account == null) {
             throw new IllegalArgumentException("Account not found.");
         }
-        BigDecimal balance = account.getBalance();
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be more than $0.0");
-        } else if (balance.compareTo(amount) < 0){
+        BigDecimal balance = account.getBalance();
+        if (balance.compareTo(amount) < 0){
             throw new IllegalArgumentException("Not enough balance");
         }
-        BigDecimal newBalance = balance.subtract(amount);
+        boolean success = bankDAO.withdraw(accountId, amount);
 
-        accountDAO.updateBalance(accountId, newBalance);
-        account.setBalance(newBalance);
+        if (!success) {
+            throw new IllegalStateException("Withdraw could not be completed");
+        }
 
-        return account;
+//        BigDecimal newBalance = balance.subtract(amount);
+//
+//        bankDAO.updateBalance(accountId, newBalance);
+//        bankDAO.createTransaction(accountId, "WITHDRAWAL", amount, null);
+//        account.setBalance(newBalance);
+
     }
 
     public void transfer(long senderId, long recipientId, BigDecimal amount) {
-        Account sender = accountDAO.findById(senderId);
-        Account recipient = accountDAO.findById(recipientId);
+        if (senderId == recipientId) {
+            throw new IllegalArgumentException("Cannot transfer money to the same account.");
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than $0.00");
+        }
+
+        Account sender = bankDAO.findById(senderId);
+        Account recipient = bankDAO.findById(recipientId);
 
         if (sender == null) {
             throw new IllegalArgumentException("Sender not found");
@@ -81,21 +105,17 @@ public class BankService {
         if (recipient == null) {
             throw new IllegalArgumentException("Recipient account not found");
         }
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than $0.00");
-        }
         if (sender.getBalance().compareTo(amount) < 0) {
             throw new IllegalArgumentException("Insufficient funds");
         }
 
-        BigDecimal senderNewBalance = sender.getBalance().subtract(amount);
-        BigDecimal recipientNewBalance = recipient.getBalance().add(amount);
+        boolean success = bankDAO.transfer(senderId, recipientId, amount);
 
-        accountDAO.updateBalance(senderId, senderNewBalance);
-        accountDAO.updateBalance(recipientId, recipientNewBalance);
+        if (!success) {
+            throw new IllegalStateException("Transfer could not be completed");
+        }
 
-        sender.setBalance(senderNewBalance);
-        recipient.setBalance(recipientNewBalance);
     }
+
 
 }
