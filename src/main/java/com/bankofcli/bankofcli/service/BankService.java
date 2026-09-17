@@ -71,4 +71,31 @@ public class BankService {
         return account;
     }
 
+    public void transfer(long senderId, long recipientId, BigDecimal amount) {
+        Account sender = accountDAO.findById(senderId);
+        Account recipient = accountDAO.findById(recipientId);
+
+        if (sender == null) {
+            throw new IllegalArgumentException("Sender not found");
+        }
+        if (recipient == null) {
+            throw new IllegalArgumentException("Recipient account not found");
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than $0.00");
+        }
+        if (sender.getBalance().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient funds");
+        }
+
+        BigDecimal senderNewBalance = sender.getBalance().subtract(amount);
+        BigDecimal recipientNewBalance = recipient.getBalance().add(amount);
+
+        accountDAO.updateBalance(senderId, senderNewBalance);
+        accountDAO.updateBalance(recipientId, recipientNewBalance);
+
+        sender.setBalance(senderNewBalance);
+        recipient.setBalance(recipientNewBalance);
+    }
+
 }
