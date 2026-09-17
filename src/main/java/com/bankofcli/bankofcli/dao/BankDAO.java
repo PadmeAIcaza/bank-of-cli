@@ -176,7 +176,7 @@ public class BankDAO {
 
     public boolean deposit(long accountId, BigDecimal amount){
         String sql = """
-        UPDATE accounts
+        UPDATE account
         SET balance = balance + ?
         WHERE account_id = ?
         """;
@@ -205,7 +205,7 @@ public class BankDAO {
 
     public boolean withdraw(long accountId, BigDecimal amount){
         String sql = """
-        UPDATE accounts
+        UPDATE account
         SET balance = balance - ?
         WHERE account_id = ?
         AND balance >= ?
@@ -241,13 +241,13 @@ public class BankDAO {
         VALUES (?, 'TRANSFER', ?, ?)
         """;
         String Withdrawsql = """
-        UPDATE accounts
+        UPDATE account
         SET balance = balance - ?
         WHERE account_id = ?
         AND balance >= ?
         """;
         String Depositsql = """
-        UPDATE accounts
+        UPDATE account
         SET balance = balance + ?
         WHERE account_id = ?
         """;

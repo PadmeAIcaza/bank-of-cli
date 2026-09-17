@@ -13,7 +13,8 @@ public class AccDaoTest {
         bankDAO = new BankDAO();
     }
 
-    // positive tests
+    //////////////////////////////////////////////////////////////////////// account methods ////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////// positive tests ////////////////////////////////////////////////////////
     @Test
     void testCreateAccount() {
 
@@ -54,7 +55,7 @@ public class AccDaoTest {
         assertNull(found);
     }
 
-    // negative tests
+    //////////////////////////////////////////////////////// negative tests ////////////////////////////////////////////////////////
     @Test
     void testAuthenticateWithInvalidAccount() {
 
@@ -75,5 +76,87 @@ public class AccDaoTest {
         boolean authenticated = bankDAO.authenticate(account.getAccountId(), "9999");
         assertFalse(authenticated);
     }
+
+//////////////////////////////////////////////////////////////////////// transaction methods ////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////// positive tests ////////////////////////////////////////////////////////
+    @Test
+    void depositShouldIncreaseBalance() {
+        Account account = bankDAO.createAccount("1234");
+        boolean result = bankDAO.deposit(account.getAccountId(), new BigDecimal("50.00"));
+
+        Account updatedAccount = bankDAO.findById(account.getAccountId());
+
+        assertTrue(result);
+        assertEquals(0, new BigDecimal("50.00").compareTo(updatedAccount.getBalance()));
+    }
+
+    @Test
+    void withdrawShouldDecreaseBalance() {
+        Account account = bankDAO.createAccount("1234");
+        bankDAO.deposit(account.getAccountId(), new BigDecimal("100.00"));
+
+        long accountId = account.getAccountId();
+        boolean result = bankDAO.withdraw(accountId, new BigDecimal("40.00"));
+
+        Account updatedAccount = bankDAO.findById(accountId);
+
+        assertTrue(result);
+        assertEquals(0, new BigDecimal("60.00").compareTo(updatedAccount.getBalance()));
+    }
+
+    @Test
+    void transferShouldMoveMoneyBetweenAccounts() {
+        Account sender = bankDAO.createAccount("1234");
+        bankDAO.deposit(sender.getAccountId(), new BigDecimal("100.00"));
+        Account recipient = bankDAO.createAccount("5678");
+        bankDAO.deposit(recipient.getAccountId(), new BigDecimal("100.00"));
+
+        boolean result = bankDAO.transfer(sender.getAccountId(), recipient.getAccountId(), new BigDecimal("50.00"));
+
+        Account updatedSender = bankDAO.findById(sender.getAccountId());
+        Account updatedRecipient = bankDAO.findById(recipient.getAccountId());
+
+        assertTrue(result);
+        assertEquals(0, new BigDecimal("50.00").compareTo(updatedSender.getBalance()));
+        assertEquals(0, new BigDecimal("150.00").compareTo(updatedRecipient.getBalance()));
+    }
+
+//////////////////////////////////////////////////////// negative tests ////////////////////////////////////////////////////////
+    @Test
+    void depositShouldReturnFalseWhenAccountDoesNotExist() {
+        boolean result = bankDAO.deposit(999999L, new BigDecimal("50.00"));
+
+        assertFalse(result);
+    }
+
+    @Test
+    void withdrawShouldFailWhenInsufficientFunds() {
+        Account account = bankDAO.createAccount("1234");
+        bankDAO.deposit(account.getAccountId(), new BigDecimal("100.00"));
+
+        long accountId = account.getAccountId();
+        boolean result = bankDAO.withdraw(accountId, new BigDecimal("150.00"));
+
+        Account updatedAccount = bankDAO.findById(accountId);
+
+        assertFalse(result);
+        assertEquals(0, new BigDecimal("100.00").compareTo(updatedAccount.getBalance()));
+    }
+
+    @Test
+    void transferShouldRollbackWhenRecipientDoesNotExist() {
+        Account sender = bankDAO.createAccount("1234");
+        bankDAO.deposit(sender.getAccountId(), new BigDecimal("100.00"));
+
+        long fakeRecipientId = 999999L;
+
+        boolean result = bankDAO.transfer(sender.getAccountId(), fakeRecipientId, new BigDecimal("100.00"));
+
+        Account updatedSender = bankDAO.findById(sender.getAccountId());
+
+        assertFalse(result);
+        assertEquals(0, new BigDecimal("100.00").compareTo(updatedSender.getBalance()));
+    }
+
 
 }
