@@ -28,8 +28,11 @@ public class BankService {
     }
 
     public BigDecimal obtainBalance(long accountId) {
-        Account found = accountDAO.findById(accountId);
-        return found.getBalance();
+        Account account = accountDAO.findById(accountId);
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found.");
+        }
+        return account.getBalance();
     }
 
     public Account deposit(long accountId, BigDecimal amount) {
@@ -37,6 +40,9 @@ public class BankService {
             throw new IllegalArgumentException("Amount must be more than $0.0");
         }
         Account account = accountDAO.findById(accountId);
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found.");
+        }
         BigDecimal newBalance = account.getBalance().add(amount);
 
         accountDAO.updateBalance(accountId, newBalance);
@@ -47,6 +53,9 @@ public class BankService {
 
     public Account withdraw(long accountId, BigDecimal amount) {
         Account account = accountDAO.findById(accountId);
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found.");
+        }
         BigDecimal balance = account.getBalance();
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
