@@ -11,6 +11,9 @@ public class BankService {
     public BankService() {
         this.bankDAO = new BankDAO();
     }
+    public BankService(BankDAO bankDAO) {
+        this.bankDAO = bankDAO;
+    } // for testing
 
     public Account register(String pin) {
         if (pin == null || !pin.matches("\\d{4}")) {
