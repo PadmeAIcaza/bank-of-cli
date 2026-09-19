@@ -52,12 +52,6 @@ public class BankService {
             throw new IllegalStateException("Deposit could not be completed");
         }
 
-//        BigDecimal newBalance = account.getBalance().add(amount);
-//
-//        bankDAO.updateBalance(accountId, newBalance);
-//        bankDAO.createTransaction(accountId, "DEPOSIT", amount, null);
-//        account.setBalance(newBalance);
-
     }
 
     public void withdraw(long accountId, BigDecimal amount) {
@@ -72,19 +66,13 @@ public class BankService {
 
         BigDecimal balance = account.getBalance();
         if (balance.compareTo(amount) < 0){
-            throw new IllegalArgumentException("Not enough balance");
+            throw new IllegalArgumentException("Insufficient funds");
         }
         boolean success = bankDAO.withdraw(accountId, amount);
 
         if (!success) {
-            throw new IllegalStateException("Withdraw could not be completed");
+            throw new IllegalStateException("Withdrawal could not be completed");
         }
-
-//        BigDecimal newBalance = balance.subtract(amount);
-//
-//        bankDAO.updateBalance(accountId, newBalance);
-//        bankDAO.createTransaction(accountId, "WITHDRAWAL", amount, null);
-//        account.setBalance(newBalance);
 
     }
 
@@ -117,5 +105,15 @@ public class BankService {
 
     }
 
+    public List<Transaction> getTransactionHistory(long accountId) {
+
+        Account account = bankDAO.findById(accountId);
+
+        if (account == null) {
+            throw new IllegalArgumentException("Account not found.");
+        }
+
+        return bankDAO.getTransactionHistory(accountId);
+    }
 
 }

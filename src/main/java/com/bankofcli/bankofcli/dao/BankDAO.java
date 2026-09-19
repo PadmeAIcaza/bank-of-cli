@@ -359,8 +359,7 @@ public class BankDAO {
                        result.getLong("transaction_id"),
                        result.getLong("account_id"),
                        result.getString("transaction_type"),
-                       result.getBigDecimal("amount"),
-                       recipientId,
+                       result.getBigDecimal("amount"), recipientId,
                        result.getTimestamp("timestamp").toLocalDateTime()
                );
 
