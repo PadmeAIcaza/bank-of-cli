@@ -118,7 +118,7 @@ public class BankServTest {
         when(bankDAO.findById(accountId)).thenReturn(account);
         when(bankDAO.deposit(accountId, amount)).thenReturn(true);
 
-        assertDoesNotThrow(() -> bankService.deposit(accountId, amount);
+        assertDoesNotThrow(() -> bankService.deposit(accountId, amount));
         verify(bankDAO).deposit(accountId, amount);
     }
 
