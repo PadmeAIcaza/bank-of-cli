@@ -6,8 +6,11 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BankDAO {
+    private static final Logger logger = LoggerFactory.getLogger(BankDAO.class);
 
     //////////////////////////////////////////////////////// Account operations ////////////////////////////////////////////////////////
     public Account createAccount(String pin) {
@@ -27,16 +30,18 @@ public class BankDAO {
             ResultSet result = statement.executeQuery(); // Java sends the query to postgreSQL
 
             if (result.next()) { // if postgreSQL return a row, read the individual columns
-                return new Account( // turn the database row into a Java obj
+                Account account =  new Account( // turn the database row into a Java obj
                         result.getLong("account_id"),
                         result.getString("pin"),
                         result.getBigDecimal("balance"),
                         result.getTimestamp("created_at").toLocalDateTime()
                 );
+                logger.info("Account {} created successfully", account.getAccountId());
+                return account;
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Database error while creating account", e);
         }
 
         return null;
@@ -66,7 +71,7 @@ public class BankDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Database error while finding account {}", accountId, e);
         }
 
         return null;
@@ -92,7 +97,7 @@ public class BankDAO {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Database error while authenticating account {}", accountId, e);
         }
 
         return false; // otherwise, return false
@@ -113,13 +118,16 @@ public class BankDAO {
             int result = statement.executeUpdate(); // returns the num of rows affected by the delete
 
             if (result > 0) {
+                logger.info("Account {} deleted successfully", accountId);
                 return true;
             }
+            logger.warn("Account {} could not be deleted because it was not found", accountId);
+            return false;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Database error while deleting account {}", accountId, e);
+            return false;
         }
-        return false;
     }
 
     public boolean deposit(long accountId, BigDecimal amount) {
@@ -148,6 +156,7 @@ public class BankDAO {
 
                 if (result == 0) {
                     connection.rollback();
+                    logger.warn("Deposit failed for account {}. Transaction rolled back", accountId);
                     return false;
                 }
             }
@@ -162,17 +171,21 @@ public class BankDAO {
 
             // both succeeded
             connection.commit();
+            logger.info("Deposit of {} completed for account {}", amount, accountId);
+
             return true;
 
         } catch (SQLException e) {
             if (connection != null) {
                 try {
                     connection.rollback();
+                    logger.warn("Deposit transaction rolled back for account {}", accountId);
+
                 } catch (SQLException rollbackException) {
-                    rollbackException.printStackTrace();
+                    logger.error("Failed to rollback deposit for account {}", accountId, rollbackException);
                 }
             }
-            e.printStackTrace();
+            logger.error("Database error while processing deposit for account {}", accountId, e);
             return false;
 
         } finally {
@@ -180,7 +193,7 @@ public class BankDAO {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    logger.error("Failed to close database connection after deposit", e);
                 }
             }
         }
@@ -213,6 +226,7 @@ public class BankDAO {
 
                 if (result == 0) {
                     connection.rollback();
+                    logger.debug("Withdrawal not completed for account {}: account not found or insufficient funds", accountId);
                     return false;
                 }
             }
@@ -227,17 +241,20 @@ public class BankDAO {
 
             // both succeeded
             connection.commit();
+            logger.info("Withdrawal of {} completed for account {}", amount, accountId);
             return true;
 
         } catch (SQLException e) {
             if (connection != null) {
                 try {
                     connection.rollback();
+                    logger.warn("Withdrawal transaction rolled back for account {}", accountId);
+
                 } catch (SQLException rollbackException) {
-                    rollbackException.printStackTrace();
+                    logger.error("Failed to rollback withdrawal for account {}", accountId, rollbackException);
                 }
             }
-            e.printStackTrace();
+            logger.error("Database error while processing withdrawal for account {}", accountId, e);
             return false;
 
         } finally {
@@ -245,7 +262,7 @@ public class BankDAO {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    logger.error("Failed to close database connection after withdrawal", e);
                 }
             }
         }
@@ -286,6 +303,7 @@ public class BankDAO {
 
                 if (result == 0) {
                     connection.rollback();
+                    logger.warn("Transfer from account {} failed while withdrawing funds", senderId);
                     return false;
                 }
             }
@@ -299,6 +317,7 @@ public class BankDAO {
 
                 if (result == 0) {
                     connection.rollback();
+                    logger.warn("Transfer from account {} to account {} failed. Transaction rolled back", senderId, recipientId);
                     return false;
                 }
             }
@@ -312,24 +331,26 @@ public class BankDAO {
 
             // everything worked
             connection.commit();
+            logger.info("Transfer of {} from account {} to account {} completed successfully", amount, senderId, recipientId);
             return true;
 
         } catch (SQLException e) {
             if (connection != null) {
                 try {
                     connection.rollback();
+                    logger.warn("Transfer from account {} to account {} rolled back", senderId, recipientId);
                 } catch (SQLException rollbackException) {
-                    rollbackException.printStackTrace();
+                    logger.error("Failed to rollback transfer from account {} to account {}", senderId, recipientId, rollbackException);
                 }
             }
-            e.printStackTrace();
+            logger.error("Database error during transfer from account {} to account {}", senderId, recipientId, e);
             return false;
         } finally {
             if (connection != null) {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    logger.error("Failed to close database connection after transfer", e);
                 }
             }
         }
@@ -366,9 +387,8 @@ public class BankDAO {
                transactions.add(transaction);
            }
        } catch (SQLException e){
-           e.printStackTrace();
+           logger.error("Database error while retrieving transaction history for account {}", accountId, e);
        }
-
        return transactions;
     }
 }
