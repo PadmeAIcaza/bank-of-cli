@@ -98,27 +98,6 @@ public class BankDAO {
         return false; // otherwise, return false
     }
 
-//    public void updateBalance(long accountId, BigDecimal balance) {
-//        String sql = """
-//            UPDATE account
-//            SET balance = ?
-//            WHERE account_id = ?
-//            """;
-//
-//        try (
-//                Connection connection = DatabaseConnection.getConnection();
-//                PreparedStatement statement = connection.prepareStatement(sql)
-//        ) {
-//
-//            statement.setBigDecimal(1, balance);
-//            statement.setLong(2, accountId);
-//            statement.executeUpdate();
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
     public boolean deleteAccount(long accountId) {
         String sql = """
             DELETE FROM account
@@ -143,94 +122,133 @@ public class BankDAO {
         return false;
     }
 
-//////////////////////////////////////////////////////// Transaction operations ////////////////////////////////////////////////////////
-    public void createTransaction(long accountId, String type, BigDecimal amount, Long recipientId) {
-        String sql = """
-            INSERT INTO transactions
-                (account_id, transaction_type, amount, recipient_id)
-            VALUES (?, ?, ?, ?)
-            """;
-
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
-
-            statement.setLong(1, accountId);
-            statement.setString(2, type);
-            statement.setBigDecimal(3, amount);
-
-            if (recipientId != null) {
-                statement.setLong(4, recipientId);
-            } else {
-                statement.setNull(4, Types.BIGINT);
-            }
-
-            statement.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public boolean deposit(long accountId, BigDecimal amount){
-        String sql = """
+    public boolean deposit(long accountId, BigDecimal amount) {
+        String Accountsql = """
         UPDATE account
         SET balance = balance + ?
         WHERE account_id = ?
         """;
+        String Transactionsql = """
+        INSERT INTO transactions
+            (account_id, transaction_type, amount, recipient_id)
+        VALUES (?, 'DEPOSIT', ?, ?)
+        """;
 
-        try (
-              Connection connection = DatabaseConnection.getConnection();
-              PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+        Connection connection = null;
 
-            statement.setBigDecimal(1, amount);
-            statement.setLong(2, accountId);
-            int result = statement.executeUpdate();
+        try {
+            connection = DatabaseConnection.getConnection();
+            connection.setAutoCommit(false);
 
-            if (result > 0) {
-                return true;
+            // update account balance
+            try (PreparedStatement statement = connection.prepareStatement(Accountsql)) {
+                statement.setBigDecimal(1, amount);
+                statement.setLong(2, accountId);
+                int result = statement.executeUpdate();
+
+                if (result == 0) {
+                    connection.rollback();
+                    return false;
+                }
             }
 
+            // record deposit transaction
+            try (PreparedStatement statement = connection.prepareStatement(Transactionsql)) {
+                statement.setLong(1, accountId);
+                statement.setBigDecimal(2, amount);
+                statement.setNull(3, java.sql.Types.BIGINT);
+                statement.executeUpdate();
+            }
+
+            // both succeeded
+            connection.commit();
+            return true;
 
         } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackException) {
+                    rollbackException.printStackTrace();
+                }
+            }
             e.printStackTrace();
+            return false;
+
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-
-        return false;
-
     }
 
     public boolean withdraw(long accountId, BigDecimal amount){
-        String sql = """
+        String Accountsql = """
         UPDATE account
         SET balance = balance - ?
         WHERE account_id = ?
         AND balance >= ?
         """;
+        String Transactionsql = """
+        INSERT INTO transactions
+            (account_id, transaction_type, amount, recipient_id)
+        VALUES (?, 'WITHDRAWAL', ?, ?)
+        """;
+        Connection connection = null;
 
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
+        try {
+            connection = DatabaseConnection.getConnection();
+            connection.setAutoCommit(false);
 
-            statement.setBigDecimal(1, amount);
-            statement.setLong(2, accountId);
-            statement.setBigDecimal(3, amount);
-            int result = statement.executeUpdate();
+            // update account balance
+            try (PreparedStatement statement = connection.prepareStatement(Accountsql)) {
+                statement.setBigDecimal(1, amount);
+                statement.setLong(2, accountId);
+                statement.setBigDecimal(3, amount);
+                int result = statement.executeUpdate();
 
-            if (result > 0) {
-                return true;
+                if (result == 0) {
+                    connection.rollback();
+                    return false;
+                }
             }
 
+            // record withdrawal transaction
+            try (PreparedStatement statement = connection.prepareStatement(Transactionsql)) {
+                statement.setLong(1, accountId);
+                statement.setBigDecimal(2, amount);
+                statement.setNull(3, java.sql.Types.BIGINT);
+                statement.executeUpdate();
+            }
+
+            // both succeeded
+            connection.commit();
+            return true;
 
         } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackException) {
+                    rollbackException.printStackTrace();
+                }
+            }
             e.printStackTrace();
-        }
+            return false;
 
-        return false;
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
     }
 
@@ -285,15 +303,12 @@ public class BankDAO {
                 }
             }
             // record transaction
-            try (
-                    PreparedStatement statement = connection.prepareStatement(Transfersql);
-            ) {
+            try (PreparedStatement statement = connection.prepareStatement(Transfersql);) {
                 statement.setLong(1, senderId);
                 statement.setBigDecimal(2, amount);
                 statement.setLong(3, recipientId);
                 statement.executeUpdate();
             }
-
 
             // everything worked
             connection.commit();
