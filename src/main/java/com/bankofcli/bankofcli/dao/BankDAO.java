@@ -93,11 +93,16 @@ public class BankDAO {
             ResultSet result = statement.executeQuery();
 
             if (result.next()) { // if a matching account exists
+                logger.info("Account {} authenticated successfully", accountId);
                 return true;
             }
 
+            // query worked but credentials did not match
+            logger.error("Authentication failed for account {}", accountId);
+            return false;
+
         } catch (SQLException e) {
-            logger.error("Database error while authenticating account {}", accountId, e);
+            logger.error("Database error while authenticating account {}", accountId, e); // DB itself failed
         }
 
         return false; // otherwise, return false
@@ -267,7 +272,7 @@ public class BankDAO {
             connection.setAutoCommit(false); // start transaction
             // remove money from sender
             try (
-                    PreparedStatement statement = connection.prepareStatement(Withdrawsql);
+                    PreparedStatement statement = connection.prepareStatement(Withdrawsql)
             ) {
                 statement.setBigDecimal(1, amount);
                 statement.setLong(2, senderId);
