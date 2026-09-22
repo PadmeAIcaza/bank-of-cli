@@ -103,33 +103,6 @@ public class BankDAO {
         return false; // otherwise, return false
     }
 
-    public boolean deleteAccount(long accountId) {
-        String sql = """
-            DELETE FROM account
-            WHERE account_id = ?
-            """;
-
-        try (
-                Connection connection = DatabaseConnection.getConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
-
-            statement.setLong(1, accountId);
-            int result = statement.executeUpdate(); // returns the num of rows affected by the delete
-
-            if (result > 0) {
-                logger.info("Account {} deleted successfully", accountId);
-                return true;
-            }
-            logger.warn("Account {} could not be deleted because it was not found", accountId);
-            return false;
-
-        } catch (SQLException e) {
-            logger.error("Database error while deleting account {}", accountId, e);
-            return false;
-        }
-    }
-
     public boolean deposit(long accountId, BigDecimal amount) {
         String Accountsql = """
         UPDATE account
