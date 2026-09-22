@@ -161,6 +161,7 @@ This provides **atomicity**, preventing partial transfers where money could be r
 ---
 
 ## 🗄️ Database
+<img width="1372" height="182" alt="ERD drawio" src="https://github.com/user-attachments/assets/609871e7-9973-4f8f-bd8a-c6464203adf2" />
 
 The application uses two primary PostgreSQL tables.
 
