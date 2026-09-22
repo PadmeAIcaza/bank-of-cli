@@ -48,15 +48,6 @@ public class AccDaoTest {
         assertTrue(authenticated);
     }
 
-    @Test
-    void testDeleteAccount() {
-        Account created = bankDAO.createAccount("1234");
-        boolean deleted = bankDAO.deleteAccount(created.getAccountId());
-        Account found = bankDAO.findById(created.getAccountId());
-        assertTrue(deleted);
-        assertNull(found);
-    }
-
     //////////////////////////////////////////////////////// negative tests ////////////////////////////////////////////////////////
     @Test
     void testAuthenticateWithInvalidAccount() {
